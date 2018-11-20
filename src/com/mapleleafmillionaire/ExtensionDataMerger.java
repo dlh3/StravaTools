@@ -18,9 +18,8 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 /**
- * A very simple and brittle application to extract {@code <extensions>} data
- * from one GPX file and combine it with the location data of another GPX file,
- * writing it to a third file.
+ * A very simple and application to extract {@code <extensions>} data from one GPX file and
+ * combine it with the location data of another GPX file, writing it to a third file.
  *
  * Use case: recorded a run with both Strava and a watch/GPS device, you want to use the Strava data,
  * but you want to add the HR and cadence data from your other device.
@@ -41,6 +40,10 @@ public class ExtensionDataMerger {
     private static final String NODE_NAME_EXTENSIONS = "extensions";
 
     public static void main(String[] args) throws Exception {
+        if (args.length != 3) {
+            usage();
+        }
+
         DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         Document docWithHR = documentBuilder.parse(args[0]);
         Document docWithoutHR = documentBuilder.parse(args[1]);
@@ -82,6 +85,14 @@ public class ExtensionDataMerger {
         Source inDocument = new DOMSource(docWithoutHR);
         Result outFile = new StreamResult(new File(args[2]));
         TransformerFactory.newInstance().newTransformer().transform(inDocument, outFile);
+    }
+
+    private static void usage() {
+        System.out.println(String.format("Usage:\njava %s <file with HR data> <file without HR data> <output file>",
+                ExtensionDataMerger.class.getSimpleName()));
+        System.out.println();
+        System.out.println("This tool will extract HR and cadence data from one GPX file and merge it into another.");
+        System.exit(-1);
     }
 
     private static Node getFirstNodeByName(Element element, String tagName) {
