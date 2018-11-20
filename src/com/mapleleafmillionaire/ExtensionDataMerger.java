@@ -1,9 +1,6 @@
 package com.mapleleafmillionaire;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.DocumentBuilder;
@@ -28,8 +25,7 @@ import java.util.TreeMap;
  * WARNING: the merged data file will be deleted if it exists!
  *
  * TODO:
- * - Use the header and metadata of file1 for the merged file, to ensure we have the namespaces
- *   for the {@code <extensions>} data (Strava will accept the upload even without valid namespaces)
+ * - Use the metadata of file1 for the merged file
  * - Include lap data (probably have to do this on TCX instead of GPX)
  * - Add more options (specify different data source, etc)
  */
@@ -81,6 +77,8 @@ public class ExtensionDataMerger {
             node.appendChild(importedExtensionsNode);
         }
 
+        replaceAttributesOnDocumentElement(docWithHR, docWithoutHR);
+
         // Write the output file
         Source inDocument = new DOMSource(docWithoutHR);
         Result outFile = new StreamResult(new File(args[2]));
@@ -110,5 +108,21 @@ public class ExtensionDataMerger {
             }
         }
         throw new IllegalArgumentException("Could not find extension data for timestamp: " + ts);
+    }
+
+    private static void replaceAttributesOnDocumentElement(Document docWithHR, Document docWithoutHR) {
+        // Remove the existing attributes
+        NamedNodeMap attributesWithoutHR = docWithoutHR.getDocumentElement().getAttributes();
+        for (int i = 0; i < attributesWithoutHR.getLength(); i++) {
+            Node attribute = attributesWithoutHR.item(i);
+            attributesWithoutHR.removeNamedItem(attribute.getNodeName());
+        }
+
+        // Add the new attributes
+        NamedNodeMap attributesWithHR = docWithHR.getDocumentElement().getAttributes();
+        for (int i = 0; i < attributesWithHR.getLength(); i++) {
+            Node attribute = attributesWithHR.item(i);
+            docWithoutHR.getDocumentElement().setAttribute(attribute.getNodeName(), attribute.getNodeValue());
+        }
     }
 }
