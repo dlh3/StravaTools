@@ -2,7 +2,6 @@ package com.mapleleafmillionaire;
 
 import org.w3c.dom.*;
 
-import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Result;
@@ -13,6 +12,8 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+
+import static com.mapleleafmillionaire.util.XmlUtil.*;
 
 /**
  * A very simple and application to extract {@code <extensions>} data from one GPX file and
@@ -48,8 +49,7 @@ public class ExtensionDataMerger {
 
         // Iterate over the trkpt nodes of the document containing extensions and extract them, along with the timestamp
         NodeList trkpts = docWithHR.getElementsByTagName(NODE_NAME_TRKPT);
-        for (int i = 0; i < trkpts.getLength(); i++) {
-            Node node = trkpts.item(i);
+        for (Node node : asList(trkpts)) {
             if (!(node instanceof Element)) {
                 continue;
             }
@@ -62,14 +62,8 @@ public class ExtensionDataMerger {
 
         // Iterate over the trkpt nodes of the document to be enhanced, parsing the time node to find the matching extensions
         NodeList trkptsWithoutHR = docWithoutHR.getElementsByTagName(NODE_NAME_TRKPT);
-        for (int i = 0; i < trkptsWithoutHR.getLength(); i++) {
-            Node node = trkptsWithoutHR.item(i);
-            if (!(node instanceof Element)) {
-                continue;
-            }
-            Element element = (Element) node;
-
-            Long time = parseTimestampToMillis(getFirstNodeByName(element, NODE_NAME_TIME).getTextContent());
+        for (Node node : asList(trkptsWithoutHR)) {
+            Long time = parseTimestampToMillis(getFirstNodeByName(node, NODE_NAME_TIME).getTextContent());
             Node extensionsNode = getNextClosestData(timesAndData, time);
 
             // We must import the node to this document, otherwise we can't use it; this also clones it
@@ -93,14 +87,6 @@ public class ExtensionDataMerger {
         System.exit(-1);
     }
 
-    private static Node getFirstNodeByName(Element element, String tagName) {
-        return element.getElementsByTagName(tagName).item(0);
-    }
-
-    private static long parseTimestampToMillis(String timestamp) {
-        return DatatypeConverter.parseDateTime(timestamp).getTimeInMillis();
-    }
-
     private static Node getNextClosestData(NavigableMap<Long, Node> timesAndData, Long ts) {
         for (Long time : timesAndData.navigableKeySet()) {
             if (time > ts) {
@@ -113,16 +99,14 @@ public class ExtensionDataMerger {
     private static void replaceAttributesOnDocumentElement(Document docWithHR, Document docWithoutHR) {
         // Remove the existing attributes
         NamedNodeMap attributesWithoutHR = docWithoutHR.getDocumentElement().getAttributes();
-        for (int i = 0; i < attributesWithoutHR.getLength(); i++) {
-            Node attribute = attributesWithoutHR.item(i);
-            attributesWithoutHR.removeNamedItem(attribute.getNodeName());
+        for (String attributeName : asMap(attributesWithoutHR).keySet()) {
+            attributesWithoutHR.removeNamedItem(attributeName);
         }
 
         // Add the new attributes
         NamedNodeMap attributesWithHR = docWithHR.getDocumentElement().getAttributes();
-        for (int i = 0; i < attributesWithHR.getLength(); i++) {
-            Node attribute = attributesWithHR.item(i);
-            docWithoutHR.getDocumentElement().setAttribute(attribute.getNodeName(), attribute.getNodeValue());
+        for (Node attributeNode : asMap(attributesWithHR).values()) {
+            docWithoutHR.getDocumentElement().setAttribute(attributeNode.getNodeName(), attributeNode.getNodeValue());
         }
     }
 }
