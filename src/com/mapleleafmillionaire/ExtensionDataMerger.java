@@ -13,10 +13,11 @@ import java.io.File;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import static com.mapleleafmillionaire.constants.GPXConstants.*;
 import static com.mapleleafmillionaire.util.XmlUtil.*;
 
 /**
- * A very simple and application to extract {@code <extensions>} data from one GPX file and
+ * A very simple application to extract {@code <extensions>} data from one GPX file and
  * combine it with the location data of another GPX file, writing it to a third file.
  *
  * Use case: recorded a run with both Strava and a watch/GPS device, you want to use the Strava data,
@@ -31,10 +32,6 @@ import static com.mapleleafmillionaire.util.XmlUtil.*;
  * - Add more options (specify different data source, etc)
  */
 public class ExtensionDataMerger {
-
-    private static final String NODE_NAME_TRKPT = "trkpt";
-    private static final String NODE_NAME_TIME = "time";
-    private static final String NODE_NAME_EXTENSIONS = "extensions";
 
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
